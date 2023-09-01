@@ -10,6 +10,9 @@ from rest_framework.views import APIView
 from rest_framework.authtoken.models import Token
 from rest_framework.response import Response
 
+from rest_framework.decorators import authentication_classes,permission_classes
+from rest_framework import permissions, authentication
+
 @api_view(['POST'])
 def signUp(request):
     serializer = UserSerializer(data=request.data)
@@ -20,7 +23,7 @@ def signUp(request):
         user.save()
         token = Token.objects.create(user=user)
         return Response({'token': token.key, 'user':serializer.data})
-    return Response({serializer.errors})
+    return Response(serializer.errors)
 
 @api_view(['POST'])
 def signIn(request):
@@ -30,3 +33,10 @@ def signIn(request):
     serializer = UserSerializer(instance=user)
     token,created = Token.objects.get_or_create(user=user)
     return Response({'token': token.key, 'user':serializer.data})
+
+class TestApi(APIView):
+    authentication_classes = [authentication.TokenAuthentication]
+    permission_classes = [permissions.IsAuthenticated]
+
+    def get(self,request):
+        return Response('passed for {}'.format(request.user.email))
